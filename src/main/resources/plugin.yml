@@ -1,0 +1,7 @@
+name: CrateReloadedNPC
+main: com.hazebyte.crate.npc.CorePlugin
+version: 1.0.0
+author: dinosaur
+website: crate.hazebyte.com
+depend: [CrateReloaded, Citizens]
+softdepend: []

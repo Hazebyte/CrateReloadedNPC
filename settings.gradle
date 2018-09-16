@@ -1,0 +1,4 @@
+gradle.ext.host = ''
+gradle.ext.user = ''
+gradle.ext.identity = ''
+gradle.ext.uploadDir = ''
