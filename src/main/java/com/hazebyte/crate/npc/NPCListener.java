@@ -4,8 +4,8 @@ import com.hazebyte.crate.api.CrateAPI;
 import com.hazebyte.crate.api.crate.Crate;
 import com.hazebyte.crate.api.crate.CrateAction;
 import com.hazebyte.crate.api.util.Messenger;
-import com.hazebyte.crate.util.MoreObjects;
-import com.hazebyte.crate.util.PlayerUtil;
+import com.hazebyte.crate.api.util.MoreObjects;
+import com.hazebyte.crate.api.util.PlayerUtil;
 import net.citizensnpcs.api.event.NPCClickEvent;
 import net.citizensnpcs.api.event.NPCLeftClickEvent;
 import net.citizensnpcs.api.event.NPCRightClickEvent;
@@ -65,7 +65,7 @@ public class NPCListener implements Listener {
 
             // OPEN
             if (handler.isRegistered(npc, seeking) && action == CrateAction.OPEN) {
-                CrateAPI.getCrateRegistrar().tryOpen(seeking, player, npc.getEntity().getLocation());
+                CrateAPI.getCrateRegistrar().tryOpen(seeking, player, npc.getEntity().getLocation(), item);
             } else {
                 // todo pushback
                 Messenger.tell(player, CrateAPI.getMessage("core.invalid_action"));
