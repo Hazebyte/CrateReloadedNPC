@@ -1,6 +1,7 @@
 package com.hazebyte.crate.npc;
 
 import co.aikar.commands.BukkitCommandManager;
+import com.hazebyte.bstats.Metrics;
 import com.hazebyte.crate.api.CrateAPI;
 import com.hazebyte.crate.api.util.Messenger;
 import com.hazebyte.crate.npc.commands.Commands;
@@ -63,11 +64,16 @@ public class CorePlugin extends JavaPlugin {
         this.getServer().getPluginManager().registerEvents(new ChangeListener(this), this);
     }
 
+    private void registerMetrics() {
+        Metrics metrics = new Metrics(this);
+    }
+
     @Override
     public void onEnable() {
         npcHandler = new NPCHandler(this);
         registerCommands();
         registerListeners();
+        registerMetrics();
     }
 
     @Override
