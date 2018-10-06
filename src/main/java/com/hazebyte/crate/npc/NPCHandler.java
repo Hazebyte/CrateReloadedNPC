@@ -60,7 +60,7 @@ public class NPCHandler {
             for (String name: crateNames) {
                 Crate crate = CrateAPI.getCrateRegistrar().getCrate(name);
                 if (crate != null) {
-                    register(npc, crate);
+                    register(npc, crate, false);
                 }
             }
         }
@@ -78,23 +78,31 @@ public class NPCHandler {
         return serialize;
     }
 
-    public boolean register(NPC npc, Crate crate) {
+    public boolean register(NPC npc, Crate crate, boolean save) {
         Integer id = npc.getId();
         if (!(crateMapping.containsEntry(id, crate))) {
             crateMapping.put(id, crate);
-            save();
+            if (save) save();
             return true;
         }
         return false;
     }
 
-    public boolean deregister(NPC npc, Crate crate) {
+    public boolean register(NPC npc, Crate crate) {
+        return register(npc, crate, true);
+    }
+
+    public boolean deregister(NPC npc, Crate crate, boolean save) {
         Integer id = npc.getId();
         boolean status = crateMapping.remove(id, crate);
-        if (status) {
+        if (status && save) {
             save();
         }
         return status;
+    }
+
+    public boolean deregister(NPC npc, Crate crate) {
+        return deregister(npc, crate, true);
     }
 
     public void save() {
