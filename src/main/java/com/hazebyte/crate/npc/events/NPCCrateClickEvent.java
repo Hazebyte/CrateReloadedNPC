@@ -1,42 +1,31 @@
-package com.hazebyte.crate.npc;
+package com.hazebyte.crate.npc.events;
 
 import com.hazebyte.crate.api.crate.Crate;
 import com.hazebyte.crate.api.crate.CrateAction;
+import net.citizensnpcs.api.event.NPCClickEvent;
 import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
 /**
  * Called when a player interacts with a crate.
  */
-public class NPCCrateEvent extends Event implements Cancellable {
+public class NPCCrateClickEvent extends NPCClickEvent implements Cancellable {
     
     private static HandlerList handlers = new HandlerList();
-    protected Player player;
     protected Crate crate;
-    protected NPC npc;
     protected CrateAction action;
     private boolean cancelled;
 
-    public NPCCrateEvent(Crate crate, Player player, NPC npc, CrateAction action) {
+    public NPCCrateClickEvent(NPC npc, Player clicker, Crate crate, CrateAction action) {
+        super(npc, clicker);
         this.crate = crate;
-        this.player = player;
-        this.npc = npc;
         this.action = action;
     }
 
-    public Player getPlayer() {
-        return player;
-    }
-    
     public Crate getCrate() {
         return crate;
-    }
-
-    public NPC getNPC() {
-        return npc;
     }
 
     public CrateAction getAction() {

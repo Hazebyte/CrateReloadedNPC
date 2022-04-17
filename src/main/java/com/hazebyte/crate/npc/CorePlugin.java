@@ -1,86 +1,82 @@
 package com.hazebyte.crate.npc;
 
 import co.aikar.commands.BukkitCommandManager;
-import com.hazebyte.bstats.Metrics;
-import com.hazebyte.crate.api.CrateAPI;
+import com.hazebyte.crate.api.crate.Crate;
 import com.hazebyte.crate.api.util.Messenger;
-import com.hazebyte.crate.npc.commands.Commands;
-import com.hazebyte.crate.npc.commands.CrateResolver;
-import com.hazebyte.crate.npc.commands.NPCResolver;
-import net.citizensnpcs.api.CitizensAPI;
+import com.hazebyte.crate.npc.commands.CrateCommand;
+import com.hazebyte.crate.npc.commands.completion.CrateCompletion;
+import com.hazebyte.crate.npc.commands.completion.ExistingNPCCompletion;
+import com.hazebyte.crate.npc.commands.completion.NPCCompletion;
+import com.hazebyte.crate.npc.commands.resolver.CrateResolver;
+import com.hazebyte.crate.npc.commands.resolver.NPCResolver;
+import com.hazebyte.crate.npc.data.NPCStore;
+import com.hazebyte.crate.npc.data.YamlNPCStore;
+import com.hazebyte.crate.npc.listener.CitizenInteractListener;
+import com.hazebyte.crate.npc.listener.RegistrarChangeListener;
+import com.hazebyte.crate.npc.registrar.MapNPCRegistrar;
+import com.hazebyte.crate.npc.registrar.NPCRegistrar;
+import net.citizensnpcs.api.event.CitizensEnableEvent;
 import net.citizensnpcs.api.npc.NPC;
-import org.bukkit.event.HandlerList;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Collections;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+public class CorePlugin extends JavaPlugin implements Listener {
 
-public class CorePlugin extends JavaPlugin {
-
-    private NPCHandler npcHandler;
+    private NPCRegistrar npcRegistrar;
+    private NPCStore npcStore;
     private BukkitCommandManager commandManager;
 
-    public NPCHandler getNpcHandler() {
-        return npcHandler;
+    public NPCRegistrar getNPCRegistrar() {
+        return npcRegistrar;
+    }
+
+    public NPCStore getNPCStore() {
+        return npcStore;
     }
 
     private void registerCommands() {
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
-        commandManager.getCommandContexts().registerContext(CrateResolver.class, CrateResolver.getContextResolver());
-        commandManager.getCommandContexts().registerContext(NPCResolver.class, NPCResolver.getContextResolver());
-        commandManager.getCommandCompletions().registerCompletion("crate", context -> CrateAPI.getCrateRegistrar()
-                    .getCrates()
-                    .stream()
-                    .map(crate -> crate.getCrateName())
-                    .collect(Collectors.toList()));
-        commandManager.getCommandCompletions().registerCompletion("npc", context -> StreamSupport.stream(CitizensAPI.getNPCRegistry().spliterator(), false)
-                    .map(npc -> Integer.toString(npc.getId()))
-                    .collect(Collectors.toList()));
-        commandManager.getCommandCompletions().registerCompletion("setnpc", context -> npcHandler.getNPCs()
-                    .stream()
-                    .map(npc -> Integer.toString(npc.getId()))
-                    .collect(Collectors.toList()));
-        commandManager.getCommandCompletions().registerCompletion("setcrate", context -> {
-//            todo Fix this context value
-//            NPCResolver resolver = context.getContextValue(NPCResolver.class);
-//            if (resolver != null) {
-//                return npcHandler.getCrates(resolver.getValue()).stream()
-//                        .map(crate -> crate.getCrateName())
-//                        .collect(Collectors.toList());
-//            }
-            return CrateAPI.getCrateRegistrar()
-                    .getCrates()
-                    .stream()
-                    .map(crate -> crate.getCrateName())
-                    .collect(Collectors.toList());
-        });
-        commandManager.registerCommand(new Commands(this));
+        commandManager.getCommandContexts().registerContext(Crate.class, new CrateResolver());
+        commandManager.getCommandContexts().registerContext(NPC.class, new NPCResolver());
+        commandManager.getCommandCompletions().registerCompletion("crate", new CrateCompletion());
+        commandManager.getCommandCompletions().registerCompletion("npc", new NPCCompletion());
+        commandManager.getCommandCompletions().registerCompletion("existing-npc", new ExistingNPCCompletion(this));
+        commandManager.registerCommand(new CrateCommand(this));
     }
 
     private void registerListeners() {
-        this.getServer().getPluginManager().registerEvents(new NPCListener(this), this);
-        this.getServer().getPluginManager().registerEvents(new ChangeListener(this), this);
+        this.getServer().getPluginManager().registerEvents(this, this);
+        this.getServer().getPluginManager().registerEvents(new CitizenInteractListener(this), this);
+        this.getServer().getPluginManager().registerEvents(new RegistrarChangeListener(this), this);
     }
 
-    private void registerMetrics() {
-        Metrics metrics = new Metrics(this);
+    @EventHandler
+    public void onCitizensLoad(CitizensEnableEvent event) {
+        Messenger.info("Citizens Hook");
+        npcStore = new YamlNPCStore(this);
+        npcStore.load().thenAccept(npcRegistrar -> {
+            if (npcRegistrar == null) {
+                this.npcRegistrar = new MapNPCRegistrar();
+            } else {
+                this.npcRegistrar = npcRegistrar;
+            }
+        });
     }
 
     @Override
     public void onEnable() {
-        npcHandler = new NPCHandler(this);
+        ConfigurationSerialization.registerClass(MapNPCRegistrar.class);
         registerCommands();
         registerListeners();
-        registerMetrics();
     }
 
     @Override
     public void onDisable() {
-        this.npcHandler.destroy();
-        this.npcHandler = null;
-        HandlerList.unregisterAll(this);
+        npcRegistrar = null;
+        commandManager = null;
     }
 
 }
