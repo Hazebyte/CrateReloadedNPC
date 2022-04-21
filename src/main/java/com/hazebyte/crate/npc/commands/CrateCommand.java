@@ -7,17 +7,17 @@ import com.hazebyte.crate.api.CrateAPI;
 import com.hazebyte.crate.api.crate.Crate;
 import com.hazebyte.crate.api.util.Messenger;
 import com.hazebyte.crate.npc.CorePlugin;
-import com.hazebyte.crate.npc.NPCHandler;
+import com.hazebyte.crate.npc.registrar.NPCRegistrar;
 import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.command.CommandSender;
 
 @CommandAlias("cnpc")
-public class Commands extends BaseCommand {
+public class CrateCommand extends BaseCommand {
 
-    private NPCHandler handler;
+    private CorePlugin plugin;
 
-    public Commands(CorePlugin plugin) {
-        this.handler = plugin.getNpcHandler();
+    public CrateCommand(CorePlugin plugin) {
+        this.plugin = plugin;
     }
 
     @Subcommand("set")
@@ -25,29 +25,23 @@ public class Commands extends BaseCommand {
     @CommandCompletion("@npc @crate")
     @Syntax("<npc> <crate>")
     @Description("Register a NPC to handle crate interactions")
-    public void onNPCSet(CommandSender sender, NPCResolver npcID, CrateResolver crateName) {
-        NPC npc = npcID.getValue();
-        Crate crate = crateName.getValue();
-
-        if (handler.isRegistered(npc, crate)) {
+    public void onNPCSet(CommandSender sender, NPC npc, Crate crate) {
+        if (plugin.getNPCRegistrar().isRegistered(npc, crate)) {
             Messenger.tell(sender, CrateAPI.getMessage("core.invalid_npc_set"));
         } else {
-            handler.register(npc, crate);
+            plugin.getNPCRegistrar().register(npc, crate);
             Messenger.tell(sender, CrateAPI.getMessage("core.successful_npc_set"));
         }
     }
 
     @Subcommand("remove")
     @CommandPermission("cr.npc.remove")
-    @CommandCompletion("@setnpc @setcrate")
+    @CommandCompletion("@existing-npc @crate")
     @Syntax("<npc> <crate>")
     @Description("Unregister a NPC from registering crate actions")
-    public void onNPCRemove(CommandSender sender, NPCResolver npcID, CrateResolver crateName) {
-        NPC npc = npcID.getValue();
-        Crate crate = crateName.getValue();
-
-        if (handler.isRegistered(npc, crate)) {
-            handler.deregister(npc, crate);
+    public void onNPCRemove(CommandSender sender, NPC npc, Crate crate) {
+        if (plugin.getNPCRegistrar().isRegistered(npc, crate)) {
+            plugin.getNPCRegistrar().remove(npc, crate);
             Messenger.tell(sender, CrateAPI.getMessage("core.successful_npc_remove"));
         } else {
             Messenger.tell(sender, CrateAPI.getMessage("core.invalid_npc_remove"));
@@ -55,7 +49,8 @@ public class Commands extends BaseCommand {
     }
 
     @HelpCommand
-    public static void onHelp(CommandSender sender, CommandHelp help) {
+    public void onHelp(CommandSender sender, CommandHelp help) {
         help.showHelp();
     }
+
 }
