@@ -47,7 +47,7 @@ public class CitizenInteractListener implements Listener {
 
         Collection<Crate> crates = plugin.getNPCRegistrar().getAll(event.getNPC());
         if (crates.contains(seekingToOpen)) {
-            CrateAPI.getCrateRegistrar().tryOpen(seekingToOpen, player, event.getNPC().getStoredLocation(), item);
+            CrateAPI.getCrateRegistrar().openConfirmationPage(seekingToOpen, player, event.getNPC().getStoredLocation());
         } else {
             Messenger.tell(player, CrateAPI.getMessage("core.invalid_action"));
         }
